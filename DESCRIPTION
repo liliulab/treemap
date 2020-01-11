@@ -1,0 +1,13 @@
+Package: treemap
+Title: A Structured Approach to Fine Mapping of eQTL Variants
+Version: 0.1
+Authors@R: person("Li", "Liu", email = "liliu@asu.edu", role = c("aut", "cre"))
+Description: Prioritize causal variants from eQTL studies.
+Depends: R (>= 3.5.3)
+License: open source
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.0.2
+Imports: MASS, igraph, intervals, parallel, DMwR, tictoc, TreeGuidedRegression, BayesFactor
+Remotes: pbchandr/TreeGuidedLasso, collectivemedia/tictoc
+
