@@ -9,6 +9,8 @@ TreeMap supports parallel processing in cluster environment.
 ````
  ## if  you have not installed devtools, please do
  install.packages("devtools");
+ ## if on Mac
+ Download "Command Line Tools for Xcode 12" from https://developer.apple.com/download/more/ before next step
  ## then install treemap
  devtools::install_github('liliulab/treemap')
 ````
