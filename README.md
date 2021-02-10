@@ -47,7 +47,9 @@ HG00097	-1.24	0	2	0
 HG00099	0.60	0	1	0	
 
 ## Reference
-Manuscript is currently under peer-review.
+Liu L, Chandrashekar P, Zeng B, Maxwell D, Kumar S Gibson G. (2020) TreeMap: A structured approach to fine mapping of eQTL variants. Bioinformatics. (Online ahead of print), PMID: 33135051.
+
+Manuscript available here (https://academic.oup.com/bioinformatics/advance-article/doi/10.1093/bioinformatics/btaa927/5948990)
 
 Li Liu, Pramod Chandrashekar, Biao Zeng, Maxwell D. Sanderford, Sudhir Kumar, Greg Gibson (2019) TreeMap: A Structured Approach to Fine Mapping of eQTL Variants.  
 
