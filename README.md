@@ -23,8 +23,15 @@ library(treemap)
 # Example: Please download the sample input file "SMNT.simulated.txt" from the "examples" folder and save it in your current working directory
 
 treemap(input.folder='./', pattern='.simulated.txt', output.folder='./output/', steps=1:9, mc.cores=1)
- 
-# The treemap command creates a new "output/" folder in which a final output file "SMNT.treemap.out" is produced. 
+
+# "input.folder" is where the files being using are being taken from, defualted as the working directory.
+# "pattern" is what the code targets to use in the input folder.
+# "output.folder" is where the results of the code are saved, can select a specific folder if needed be.
+# The treemap command creates a new "output/" folder in which a final output file "SMNT.treemap.out" is produced if not specified.
+# "steps" is a vector of integers corresponding to the functions that will be executed. Default is 1:9. The final output is written to
+# a file named xx.treemap.out where xx matches the name of the input file.
+# "mc.cores" are the number of parallel processes that will be forked for batch processing. For multi-core desktops or server cluster.
+# Default is 1.
 # You can compare this output file with the "examples/output/SMNT.treemap.out" file on this github page.
 # The "output/" folder also contains several intermediates files that can be reused during re-analysis to save time. 
 # For re-analysis, users can specify "steps" to execute outer-, middle- or inner-layer functions. 
