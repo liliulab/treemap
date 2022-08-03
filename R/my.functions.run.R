@@ -1,12 +1,14 @@
 library(parallel);
 
-# i=3; n=136; input.info <- input.list.all[[i]][[n]]; input.folder='./'; write=F; rsq.cutoff=0.01; weighted=''; input.info$gene.name; flag=0; time.limit=0; delim=','; header=F; skip=0;
+# i=1; input.info <- input.list[[i]]; weighted=''; steps=1:9; flag=0; time.limit=0; delim=','; header=F; skip=0; p.cutoff=1e-4;
+# input.folder='./'; write=F; rsq.cutoff=0.01; weighted=''; input.info$gene.name; flag=0; time.limit=0; delim=','; header=F; skip=0;
 # input.info="ENSG00000163071"; weighted=''; steps=3:8; flag=1; time.limit=0; delim='\t'; header=T; skip=1;
 run.1 <- function(input.info, weighted='', steps=1:9, flag=0, time.limit=0, delim=',', header=F, skip=0, p.cutoff=1e-4) {
 	## pre-processing
 	time.0 <- Sys.time()
 	stop.signal <- F;
 	if(1 %in% steps) {
+		cat('step 1...');
 		stop.signal <- tryCatch({
 			pre.processing.1(input.info);
 		}, error = function(e) {
@@ -21,8 +23,9 @@ run.1 <- function(input.info, weighted='', steps=1:9, flag=0, time.limit=0, deli
 	if(!stop.signal) {
 		## outer layer
 		if(2 %in% steps) {
+			cat('step 2...');
 			if(flag==0) {
-				run.tree.lasso(name=input.info[1, 'response.file'], flag=flag, flag_string='response', output_file_name='tree-lasso', time.limit=time.limit, weight_flag=0, skip=skip);
+				run.tree.lasso(name=input.info[1, 'response.file'], flag=flag, flag_string='response', output_file_name='tree-lasso', time.limit=time.limit, weighted=weighted, weight_flag=0, skip=skip);
 			} else {
 				run.tree.lasso(name=input.info, flag=flag, flag_string='exp', output_file_name='tree.lasso.maf05', time.limit=time.limit, weight_flag=0, skip=skip);
 			}
@@ -57,46 +60,54 @@ run.1 <- function(input.info, weighted='', steps=1:9, flag=0, time.limit=0, deli
 			run.time <- 0;
 		} else if(file.exists(lasso.file.path)) {		
 			if(3 %in% steps) {
+				cat('step 3...');
 				top <- parse.lasso(input=input, snp.names=snp.names, group=group, lasso.file.path=lasso.file.path, top.file.path=top.file.path, weighted=weighted)
 			}
 			time.top <- Sys.time()
 			
 			## middle layer
 			if(4 %in% steps) {
+				cat('step 4...');
 				selected.within <- select.within.groups(top=top, input=input, snp.names=snp.names, group=group, within.file.path=within.file.path)
 			}
-			time.within <- Sys.time()	
-			
-			## inner layer
+			time.within <- Sys.time()				
 			if(5 %in% steps) {
+				cat('step 5...');
 				selected.cross <- select.cross.groups(selected.within=selected.within, input=input, snp.names=snp.names, group=group, cross.file.path=cross.file.path)
 			}
 			time.cross <- Sys.time()	
 			if(6 %in% steps) {
+				cat('step 6...');
 				selected.locus <- report.locus(gene.name=gene.name, selected.cross=selected.cross, input=input, snp.names=snp.names, group=group, rsq.cutoff=0.01, locus.file.path);
 			}
 			time.locus <- Sys.time()
+
+			## inner layer
 			if(7 %in% steps) {
+				cat('step 7...');
 				selected.comb <- combine.locus(gene.name=gene.name, selected.locus=selected.locus, selected.cross=selected.cross, input=input, snp.names=snp.names, group=group, rsq.cutoff=0.01, comb.file.path=comb.file.path, snp.anno=snp.anno)
 			}
 			time.comb <- Sys.time()
 			if(8 %in% steps) {
+				cat('step 8...');
 				effect <- estimate.effect.comb(gene.name=gene.name, selected.comb=selected.comb, input=input, effect.file.path=effect.file.path, p.cutoff=p.cutoff)
 			}
 			time.effect <- Sys.time()
-			cat(paste(gene.name, 'successfully finished\n')); flush.console();
 			
 			run.time <- c(time.comb-time.0, time.comb-time.pre, time.pre-time.0, time.lasso-time.pre, time.top-time.lasso, time.within-time.top, time.cross-time.within, time.locus-time.cross, time.comb-time.locus);	
 			if(9 %in% steps) {
+				cat('step 9...');
 				write.table(t(run.time), log.file.path, sep='\t', row.names=F, col.names=F, quote=F);
 			}
+			cat(paste(gene.name, 'successfully finished\n')); flush.console();
 		}
 		return(run.time);
 	}
 }
 # for(n in 1:200) { run.1(input.list.all[[i]][[n]], steps=4:7) }
 
-retry <- function(input.info, weighted='', steps=1:8) {
+retry <- function(input.info, weighted='', steps=1:9) {
+	cat('inside retry\n');
 	comb.file.path <- gsub('.RData', '.comb.txt', input.info[1, 'output.file']);
 	if(!file.exists(comb.file.path)) {
 		run.time <- run.1(input.info, weighted=weighted, steps=steps);	
@@ -163,45 +174,49 @@ conditional.1 <- function(input.info, input.folder='') {
 	time.cond <- Sys.time()
 	sig <- my_conditional(data.all);
 	
-	time.cor <- Sys.time()
-	sig <- merge(snp.names, sig, by='snp', all.x=F, all.y=T);
-	sig$cor <- 1;
-	sig$rank <- 1;
-	result <- c();
-	for(s in 1:nrow(sig)) {
-		this.sig <- sig[s, ]
-		this.idx <- sig[s, 'idx'];
-		this.cor <- cor(geno, geno[, this.idx])^2;
-		this.cor <- data.frame(snp=row.names(this.cor), p=NA, p.w=NA, eff=NA, cor=this.cor);
-		this.cor <- this.cor[which(this.cor$cor >= 0.5), ]
-		this.cor <- merge(snp.names, this.cor, by='snp', all.x=F, all.y=T);
-		this.cor <- this.cor[order(-this.cor$cor), ]
-		this.cor <- this.cor[which(this.cor$idx != this.idx), ]
-		this.sig.cor <- this.sig;
-		if(nrow(this.cor) > 0) {
-			this.cor$rank <- 2:(nrow(this.cor)+1)
-			this.sig.cor <- rbind(this.sig, this.cor);
+	if(length(sig) > 1) {
+		time.cor <- Sys.time()
+		sig <- merge(snp.names, sig, by='snp', all.x=F, all.y=T);
+		sig$cor <- 1;
+		sig$rank <- 1;
+		result <- c();
+		for(s in 1:nrow(sig)) {
+			this.sig <- sig[s, ]
+			this.idx <- sig[s, 'idx'];
+			this.cor <- cor(geno, geno[, this.idx])^2;
+			this.cor <- data.frame(snp=row.names(this.cor), p=NA, p.w=NA, eff=NA, cor=this.cor);
+			this.cor <- this.cor[which(this.cor$cor >= 0.5), ]
+			this.cor <- merge(snp.names, this.cor, by='snp', all.x=F, all.y=T);
+			this.cor <- this.cor[order(-this.cor$cor), ]
+			this.cor <- this.cor[which(this.cor$idx != this.idx), ]
+			this.sig.cor <- this.sig;
+			if(nrow(this.cor) > 0) {
+				this.cor$rank <- 2:(nrow(this.cor)+1)
+				this.sig.cor <- rbind(this.sig, this.cor);
+			}
+			this.sig.cor$locus <- s;
+			this.sig.cor$gene.name <- gene.name;
+			result <- rbind(result, this.sig.cor);
 		}
-		this.sig.cor$locus <- s;
-		this.sig.cor$gene.name <- gene.name;
-		result <- rbind(result, this.sig.cor);
-	}
-	if(!is.null(result) && nrow(result) > 0) {
-		result <- result[, which(!colnames(result) %in% c('p.w', 'idx'))]
-	}
-	time.end <- Sys.time()
-	run.time <- c(time.cond-time.input, time.cor-time.cond, time.end-time.cor, time.end-time.input);	
-	
-	write.table(format(result, digits=3), paste(input.folder, gsub('.RData', '.cond.out', output.file), sep=''), sep='\t', row.names=F, quote=F);
-	write.table(t(run.time), paste(input.folder, gsub('.RData', '.cond.log', output.file), sep=''), sep='\t', row.names=F, col.names=F, quote=F);
+		if(!is.null(result) && nrow(result) > 0) {
+#			result <- result[, which(!colnames(result) %in% c('p.w', 'idx'))]
+			result <- result[, which(!colnames(result) %in% c('p.w'))]
+		}
+		time.end <- Sys.time()
+		run.time <- c(time.cond-time.input, time.cor-time.cond, time.end-time.cor, time.end-time.input);	
+		
+		write.table(format(result, digits=3), paste(input.folder, gsub('.RData', '.cond.out', output.file), sep=''), sep='\t', row.names=F, quote=F);
+		write.table(t(run.time), paste(input.folder, gsub('.RData', '.cond.log', output.file), sep=''), sep='\t', row.names=F, col.names=F, quote=F);
 
-	return(result);
+		return(result);
+	}
 }
 
 #' Perform TreeMap analysis for fine mapping.
-#' @param input.folder: The directory where input files are available. Default is the current working directory. Each input file is a tab-delimited text file. The first line has column headers with no specific restrictions. The remaining lines have sample ID in the 1st column, gene expression value in the 2nd column, and genotype data in the other columns. Genotypes values are coded as 0/1/2 for homozygous reference, heterozygous and homozygous alternative, respectively. Each row has data from one individual. A sample input file "SMNT.simulated.txt" is available in the "examples/" folder. 
-#' @param pattern: A string that matches part of the input file names. This string shall be present in only input files, and absent from other file names in the same folder. Default is '.txt'.
+#' @param input.folder: The directory where input files are available. Default is the current working directory. Each input file is a tab-delimited text file - sample ID in the 1st column, gene expression value in the 2nd column, and genotype data in the remaining columns. Genotypes values are coded as 0/1/2 for homozygous reference, heterozygous and homozygous alternative, respectively. Each row has data from one individual. Each input file shall have a header line. While the column headers have no restrictions, we recommend using variant IDs as the headers of the genotype columns. An example input file "SMNT.exp_geno.txt" is provided in the "examples/" folder. 
+#' @param pattern: A string that matches part of the input file names. This string shall be present in only input files, and absent from other file names in the same folder. Default is 'exp_geno.txt'.
 #' @param output.folder: The directory where output files and intermediate files are to be saved. If the specified directory does not exist, it will be automatically created. Default is the current working directory.
+#' @param weighted: A string that indicates if functional scores are used for weighting. Default value is an empty string "" indicating no weighting. If set to "func", functional scores from an annotation file will be used. The annotation file shall be named as "xxxx.anno.txt" where "xxxx" matches the unique substring of the corresponding exp_geno input file name, e.g., "SMNT.anno.txt". The annotation file has two tab-delimited columns - the 1st column has variant IDs matching the headers of the genotype columns in the input file; the 2nd column has functional scores. Variants with high functional scores have increased chance of being selected as causal. Each annotation file shall have a header line, although there is no restriction on how you want to name each column. A example annotation file "SMNT.anno.txt" is provided in the "examples/" folder.
 #' @param steps: A vector of integers corresponding to the functions that will be executed. Default is 1:9. The final output is written to a file named xx.treemap.out where xx matches the name of the input file.
 #'	1: pre-processing. This step removes variants with missing genotypes in >50% samples, and remove samples with missing genotypes of >50% variants. It performs z-transformation to scale each genotype column. It groups variants into a hierarchical structure based on linkage disequilibrium. This step produces several intermediate files including xx.response.csv.gz, xx.geno.csv.gz, xx.geno.norm.csv.gz and xx.group.csv.gz that correspond to gene expression values, original genotypes, normalized genotype values, LD groups, respectively.
 #'	2: outer-layer. This step performs tree-guided group lasso. It produces an intermediate file xx.tree-lasso.csv
@@ -215,19 +230,24 @@ conditional.1 <- function(input.info, input.folder='') {
 #' @param mc.cores: The number of parallel processes that will be forked for batch processing. This is useful for multi-core desktops or server clusters. Default is 1. 
 #' @return NULL
 #'	The final fine mapping result is written to the file xx.treemap.out. The "locus" column indicates unique causal locus. The "rank" column indicates ranking of variants within each locus. Variants with rank of 1 are lead eVars at a locus. Lead eVars are included in the global optimal solution, and their estimated effect sizes are in the "effect.est" column. Variants with rank >1 are suboptimal solutions that are linked to the lead eVar at each locus, with r2 values shown in the "cor" column.
-treemap <- function(input.folder='./', pattern='.txt', output.folder='./', steps=1:9, mc.cores=1) {
-	input.list <- create.batch.processing.list(input.folder.path=input.folder, pattern=pattern, output.folder.path=output.folder); 
-	treemap.output <- mclapply(input.list, run.1, weighted='', mc.cores=mc.cores, steps=steps)
+treemap <- function(input.folder='./', pattern='exp_geno.txt', output.folder='./', weighted='', steps=1:9, mc.cores=mc.cores, retry.flag=F) {
+	input.list <- create.batch.processing.list(input.folder.path=input.folder, pattern=pattern, output.folder.path=output.folder, weighted=weighted); 
+	if(retry.flag) {
+		cat('retrying...\n');
+		retry.output <- mclapply(input.list, retry, weighted=weighted, mc.cores=mc.cores, steps=steps);
+	} else {
+		treemap.output <- mclapply(input.list, run.1, weighted=weighted, mc.cores=mc.cores, steps=steps)
+	}
 }
 
 #' Perform simple stepwise conditional analysis for fine mapping.
 #' @param input.folder: The directory where input files are available. Default is the current working directory.
-#' @param pattern: A string that matches part of the input file names. This string shall be present in only input files, and absent from other file names in the same folder. Default is '.txt'.
+#' @param pattern: A string that matches part of the input file names. This string shall be present in only input files, and absent from other file names in the same folder. Default is 'exp_geno.txt'.
 #' @param output.folder: The directory where output files and intermediate files are to be saved. If the specified directory does not exist, it will be automatically created. Default is the current working directory.
 #' @param mc.cores: The number of parallel processes that will be forked for batch processing. This is useful for multi-core desktops or server clusters. Default is 1. 
 #' @return NULL
 #'	The final fine mapping result is written to the file xx.treemap.out. The "locus" column indicates unique causal locus. The "rank" column indicates ranking of variants within each locus. Variants with rank of 1 are lead eVars at a locus. P-values and effects of lead eVars are in the "p" column and the "eff" column, respectively. Variants with rank >1 are ordered based on their linkage to the lead eVar at each locus, with r2 values shown in the "cor" column.
-conditional <- function(input.folder='./', pattern='.txt', output.folder='./', mc.cores=1) {
+conditional <- function(input.folder='./', pattern='exp_geno.txt', output.folder='./', mc.cores=1) {
 	input.list <- create.batch.processing.list(input.folder.path=input.folder, pattern=pattern, output.folder.path=output.folder); 
 	conditional.output <- mclapply(input.list, conditional.1, mc.cores=mc.cores)
 }

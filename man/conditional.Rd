@@ -6,7 +6,7 @@
 \usage{
 conditional(
   input.folder = "./",
-  pattern = ".txt",
+  pattern = "exp_geno.txt",
   output.folder = "./",
   mc.cores = 1
 )
@@ -14,7 +14,7 @@ conditional(
 \arguments{
 \item{input.folder:}{The directory where input files are available. Default is the current working directory.}
 
-\item{pattern:}{A string that matches part of the input file names. This string shall be present in only input files, and absent from other file names in the same folder. Default is '.txt'.}
+\item{pattern:}{A string that matches part of the input file names. This string shall be present in only input files, and absent from other file names in the same folder. Default is 'exp_geno.txt'.}
 
 \item{output.folder:}{The directory where output files and intermediate files are to be saved. If the specified directory does not exist, it will be automatically created. Default is the current working directory.}
 

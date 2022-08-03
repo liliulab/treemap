@@ -6,18 +6,22 @@
 \usage{
 treemap(
   input.folder = "./",
-  pattern = ".txt",
+  pattern = "exp_geno.txt",
   output.folder = "./",
+  weighted = "",
   steps = 1:9,
-  mc.cores = 1
+  mc.cores = mc.cores,
+  retry.flag = F
 )
 }
 \arguments{
-\item{input.folder:}{The directory where input files are available. Default is the current working directory. Each input file is a tab-delimited text file. The first line has column headers with no specific restrictions. The remaining lines have sample ID in the 1st column, gene expression value in the 2nd column, and genotype data in the other columns. Genotypes values are coded as 0/1/2 for homozygous reference, heterozygous and homozygous alternative, respectively. Each row has data from one individual. A sample input file "SMNT.simulated.txt" is available in the "examples/" folder.}
+\item{input.folder:}{The directory where input files are available. Default is the current working directory. Each input file is a tab-delimited text file - sample ID in the 1st column, gene expression value in the 2nd column, and genotype data in the remaining columns. Genotypes values are coded as 0/1/2 for homozygous reference, heterozygous and homozygous alternative, respectively. Each row has data from one individual. Each input file shall have a header line. While the column headers have no restrictions, we recommend using variant IDs as the headers of the genotype columns. An example input file "SMNT.exp_geno.txt" is provided in the "examples/" folder.}
 
-\item{pattern:}{A string that matches part of the input file names. This string shall be present in only input files, and absent from other file names in the same folder. Default is '.txt'.}
+\item{pattern:}{A string that matches part of the input file names. This string shall be present in only input files, and absent from other file names in the same folder. Default is 'exp_geno.txt'.}
 
 \item{output.folder:}{The directory where output files and intermediate files are to be saved. If the specified directory does not exist, it will be automatically created. Default is the current working directory.}
+
+\item{weighted:}{A string that indicates if functional scores are used for weighting. Default value is an empty string "" indicating no weighting. If set to "func", functional scores from an annotation file will be used. The annotation file shall be named as "xxxx.anno.txt" where "xxxx" matches the unique substring of the corresponding exp_geno input file name, e.g., "SMNT.anno.txt". The annotation file has two tab-delimited columns - the 1st column has variant IDs matching the headers of the genotype columns in the input file; the 2nd column has functional scores. Variants with high functional scores have increased chance of being selected as causal. Each annotation file shall have a header line, although there is no restriction on how you want to name each column. A example annotation file "SMNT.anno.txt" is provided in the "examples/" folder.}
 
 \item{steps:}{A vector of integers corresponding to the functions that will be executed. Default is 1:9. The final output is written to a file named xx.treemap.out where xx matches the name of the input file.
 1: pre-processing. This step removes variants with missing genotypes in >50% samples, and remove samples with missing genotypes of >50% variants. It performs z-transformation to scale each genotype column. It groups variants into a hierarchical structure based on linkage disequilibrium. This step produces several intermediate files including xx.response.csv.gz, xx.geno.csv.gz, xx.geno.norm.csv.gz and xx.group.csv.gz that correspond to gene expression values, original genotypes, normalized genotype values, LD groups, respectively.

@@ -30,5 +30,8 @@ idx	gene.name	locus	rank	snp	cor	lead	cross	level	flag	rsq.diff
 347	SMTN	7	1	rs73156770	1	rs73156770	in	second	-*	NA
 210	SMTN	8	1	rs2285923	1	rs2285923	in	second	-*	NA
 768	SMTN	9	1	rs55888048	1	rs55888048	in	second	-*	NA
-559	SMTN	10	1	rs56095120	1	rs56095120	remains	second	-	NA
-656	SMTN	11	1	rs8135641	1	rs8135641	remains	second	-	NA
+349	SMTN	10	1	rs9609201	1	rs9609201	in	second	-*	NA
+559	SMTN	11	1	rs56095120	1	rs56095120	remains	second	-	NA
+39	SMTN	12	1	rs75638808	1	rs75638808	in	second	-*	NA
+656	SMTN	13	1	rs8135641	1	rs8135641	remains	second	-	NA
+351	SMTN	14	1	rs7287178	1	rs7287178	in	second	-*	NA

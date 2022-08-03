@@ -2,21 +2,16 @@
 
 # Import package dependencies
 import(TreeGuidedRegression)
-#import(stringr)
+import(stringr)
 import(tictoc)
 import(parallel);
 import(MASS);
 import(BayesFactor);
-importFrom(igraph, graph_from_adjacency_matrix);
-importFrom(igraph, as.undirected);
-importFrom(igraph, cluster_fast_greedy);
-importFrom(igraph, sizes);
-importFrom(intervals, Intervals);
-importFrom(intervals, interval_overlap);
-#import(igraph)
-#import(intervals)
-importFrom(DMwR, knnImputation);
+import(igraph);
+import(intervals);
+import(DMwR);
 
 # export functions for users
 export(treemap)
 export(conditional)
+
