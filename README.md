@@ -47,7 +47,7 @@ The optional annotation file is a tab-delimited text file. The first line has co
 
 ## Reference
 
-Li Liu, Pramod Chandrashekar, Biao Zeng, Maxwell D. Sanderford, Sudhir Kumar, Greg Gibson (2019) TreeMap: A Structured Approach to Fine Mapping of eQTL Variants.  
+Li Liu, Pramod Chandrashekar, Biao Zeng, Maxwell D. Sanderford, Sudhir Kumar, Greg Gibson (2020) TreeMap: A Structured Approach to Fine Mapping of eQTL Variants. Bioinformatics 37(8):1125-1134 https://doi.org/10.1093/bioinformatics/btaa927 
 
 ## Contributors
 Li Liu developed the algorithm of TreeMap. Pramod Chandrashekar implemented tree-guided group lasso in R based on matlab codes from the SLEP package. Please contact liliu at asu.edu for any questions or suggestions.
