@@ -212,7 +212,7 @@ stepwise.leaf <- function(input, index, snp.names, weight=NULL, type='both') {
 				sig.snp.index <- which(snp.names %in% sig.name);
 			}
 		} else if(type == 'comb') {
-			sig.snp.index <- test_comb(input=input, index=index, locus=NULL, cn=2);
+			sig.snp.index <- test_comb(data.all=input, index=index, cn=2);
 		} else if(type == 'my_backward') {
 			sig.snp.index <- my_backward(input=input, snp.names=snp.names, index=index);
 		} else {
