@@ -20,6 +20,7 @@ library(treemap)
 # A sample input file "SMNT.exp_geno.txt" is available in the "examples" folder. 
 treemap(input.folder='examples/', pattern='.exp_geno.txt', output.folder='examples/output/', steps=1:9, mc.cores=1) 
 # Compare the output file "SMNT.treemap.out" from the above command with the "examples/SMNT.treemap.out" file in the "examples/" folder. 
+# Note that only variants passing the p-value<0.0001 threshold are included in the ".treemap.out" file. If this file is missing, users can examine other files, e.g., ".comb.out" for intermediate results.
 # Several intermediates files are produced that can be reused during re-analysis to save time. 
 # For re-analysis, users can specify "steps" to execute outer-, middle- or inner-layer functions. 
 # Additional usages can be found via using "?treemap" after installing the R treemap package.
