@@ -70,8 +70,9 @@ collect.info <- function(input.info, input.folder='', weighted='', covar.file=''
 		if(weighted == 'both') {
 			group$weight <- group$weight.maf*(1-group$weight.maf) + (1-group$weight.func)*5 + 1
 		} else if(weighted == 'maf') {
-			group$weight <- group$weight.maf*(1-group$weight.maf) + 1
-		} else if(weighted == 'function') {
+#			group$weight <- group$weight.maf*(1-group$weight.maf) + 1
+			group$weight <- group$weight.maf + 1
+		} else if(weighted == 'func') {
 			group$weight <- (1-group$weight.func)*5 + 1
 		} else {
 			group$weight <- 1;   ## no weight
@@ -202,23 +203,28 @@ partition <- function(group, candidates, merge.single.leaf=F) {
 	return(list.blocks);
 }
 
-rank.within.block <- function(data.all, top, one.block, cor.cutoff=0) {
+rank.within.block <- function(data.all, top, one.block, cor.cutoff=0, weight.all) {
 	geno <- data.all[, -1];
 	snp.names <- colnames(geno);
-	ranked <- data.frame(idx=top, snp=snp.names[top], cor=1, rank=1, stringsAsFactors=F);
+	if(is.null(weight.all)) {
+		weight.all <- rep(1, length(snp.names))
+	}
+	ranked <- data.frame(idx=top, snp=snp.names[top], cor=1, rank=1, cor.adj=1, weight=weight.all[top], stringsAsFactors=F);
 	one.block <- one.block[which(one.block != top)];
 	if(length(one.block) > 0) {
 		cor.block <- cor(geno[, one.block], geno[, top])^2;
-		cor.block <- data.frame(cor=cor.block, idx=one.block, snp=snp.names[one.block])
+		cor.block <- data.frame(cor=cor.block, idx=one.block, snp=snp.names[one.block], cor.adj=cor.block-weight.all[one.block]*0.01, weight=weight.all[one.block])
 		cor.block <- cor.block[which(cor.block$cor > cor.cutoff), ];
 		if(nrow(cor.block) > 0) {
-			cor.block$rank <- rank(-cor.block$cor, ties.method='min') + 1;
+			cor.block$rank <- rank(-cor.block$cor.adj, ties.method='min') + 1;
 			cor.block <- cor.block[order(cor.block$rank), ]
 			ranked <- rbind(ranked, cor.block);
 		}
 	}
 	ranked$lead <- snp.names[top]
-	ranked$p.value <- uni.unorder(data.all[, 1], data.all[, ranked$idx+1], snp.names[ranked$idx])$p.value;
+	uu <- uni.unorder(data.all[, 1], data.all[, ranked$idx+1], snp.names[ranked$idx], weight.all[ranked$idx]);
+	ranked$p.value <- uu$p.value;
+	ranked$p.adj <- uu$p.adj;
 	return(ranked);
 }
 
@@ -296,17 +302,21 @@ my_backward <- function(input, snp.names, index) {
 }
 
 # index shall include locus.
-test_comb <- function(data.all, index, cn=2) {
+test_comb <- function(data.all, index, cn=2, weight.all) {
 	if(length(index) > 500) {
 		index <- sample(index, 500, replace=F);
 	}
 	idx.single <- c();
 	aic.single <- c();
 	snp.names <- colnames(data.all)[-1];
-	top <- uni.order(data.all[, 1], data.all[, index+1], snp.names[index])[1, ];
-	if(top$p < 0.05) {
+	if(is.null(weight.all)) {
+		weight.all <- rep(1, length(snp.names))
+	}
+	top <- uni.order(data.all[, 1], data.all[, index+1], snp.names[index], weight.all[index])[1, ];
+	if(top$p.value < 0.05) {
 		idx.single <- which(snp.names == top$rs);
 		aic.single <- AIC(lm(resp ~ ., data=data.all[, c(1, idx.single+1)], na.action=na.exclude));
+		aic.single <- aic.single + weight.all[idx.single]
 	}
 	
 	idx.comb <- c();
@@ -328,6 +338,7 @@ test_comb <- function(data.all, index, cn=2) {
 			}
 			idx.comb <- result[which.max(result[, 3]), ][1:2]
 			aic.comb <- AIC(lm(resp ~ ., data=data.all[, c(1, idx.comb+1)], na.action=na.exclude));
+			aic.comb <- aic.comb + mean(weight.all[idx.comb])
 		}
 	}
 	
@@ -350,6 +361,7 @@ test_comb <- function(data.all, index, cn=2) {
 report.locus <- function(gene.name, selected.cross, input, snp.names, group, rsq.cutoff=0.01, locus.file.path) { 
 	reported <- selected.cross;
 	data.all <- input;
+	weight.all <- group[which(group$weight.size == 1), 'weight']
 	
 	top.cross.group <- reported$top.cross.group; 
 	top.cross.linked <- reported$top.cross.linked; 
@@ -376,9 +388,9 @@ report.locus <- function(gene.name, selected.cross, input, snp.names, group, rsq
 				for(b in 1:length(list.blocks)) {
 					one.block <- list.blocks[[b]];
 	#				cat(length(one.block), ','); flush.console();
-					comb <- test_comb(data.all=data.all, index=one.block, cn=2);
+					comb <- test_comb(data.all=data.all, index=one.block, cn=2, weight.all=weight.all);
 					for(tp in comb) {
-						ranked <- rank.within.block(data.all=data.all, top=tp, one.block=one.block, cor.cutoff=0.8);
+						ranked <- rank.within.block(data.all=data.all, top=tp, one.block=one.block, cor.cutoff=0.8, weight.all=weight.all);
 						ll <- ll + 1;
 						ranked$locus <- ll;
 						ranked$level <- level;
@@ -392,13 +404,13 @@ report.locus <- function(gene.name, selected.cross, input, snp.names, group, rsq
 			remains <- reported[which(!reported %in% locus.block$idx)];
 			flag <- !is.null(remains) && length(remains) > 0
 			while(flag) {
-				top <- uni.order(data.all[, 1], data.all[, remains+1], snp.names[remains])[1, 'rs'];
+				top <- uni.order(data.all[, 1], data.all[, remains+1], snp.names[remains], weight.all[remains])[1, 'rs'];
 				top <- which(snp.names == top);
 				fit <- lm(resp ~ ., data=data.all[, c(1, top+1)], na.action=na.exclude)
 				coeff <- summary(fit)$coefficients
 				p <- coeff[2, 4];
 				if(p < 0.05 & summary(fit)$adj.r.squared > rsq.cutoff) {
-					ranked <- rank.within.block(data.all, top, remains, cor.cutoff=0.8);
+					ranked <- rank.within.block(data.all, top, remains, cor.cutoff=0.8, weight.all=weight.all);
 					ll <- ll + 1;
 					ranked$locus <- ll;
 					ranked$level <- level;
@@ -412,7 +424,7 @@ report.locus <- function(gene.name, selected.cross, input, snp.names, group, rsq
 			}
 					
 			if(!is.null(locus.block)) {
-				locus.block <- data.frame(gene.name=gene.name, locus.orig=as.numeric(locus.block$locus), rank=as.numeric(locus.block$rank), idx=as.numeric(locus.block$idx), snp=locus.block$snp, cor=as.numeric(locus.block$cor), level=locus.block$level, p.value=locus.block$p.value, lead=locus.block$lead, cross=locus.block$cross, stringsAsFactors=F);
+				locus.block <- data.frame(gene.name=gene.name, locus.orig=as.numeric(locus.block$locus), rank=as.numeric(locus.block$rank), idx=as.numeric(locus.block$idx), snp=locus.block$snp, cor=as.numeric(locus.block$cor), cor.adj=as.numeric(locus.block$cor.adj), level=locus.block$level, p.value=locus.block$p.value, p.adj=locus.block$p.adj, lead=locus.block$lead, cross=locus.block$cross, weight=locus.block$weight, stringsAsFactors=F);
 				locus.block <- unique(locus.block)
 				locus.block <- locus.block[order(locus.block$locus.orig, locus.block$level, locus.block$rank, locus.block$idx), ];
 				
@@ -425,12 +437,12 @@ report.locus <- function(gene.name, selected.cross, input, snp.names, group, rsq
 				if(nrow(locus.block.top) > 1) {
 					fit <- lm(resp ~ ., data=data.all[, c(1, locus.block.top$idx+1)], na.action=na.exclude)
 					coeff <- summary(fit)$coeff;
-					order <- order(coeff[-1, 4])
+					order <- order(coeff[-1, 4]*weight.all[locus.block.top$idx])
 					locus.block.top <- locus.block.top[order, ];
 				}
 				locus.block.top$locus <- 1:nrow(locus.block.top);
 				locus.block <- merge(locus.block, locus.block.top[, c('snp', 'locus')], by.x='lead', by.y='snp', all=T);
-				locus.block <- locus.block[, c('gene.name', 'locus', 'rank', 'idx', 'snp', 'cor', 'lead', 'cross', 'level')]
+				locus.block <- locus.block[, c('gene.name', 'locus', 'rank', 'idx', 'snp', 'cor', 'cor.adj', 'lead', 'cross', 'level', 'weight')]
 				locus.block <- locus.block[order(locus.block$locus, locus.block$rank, locus.block$idx), ];
 				locus.block$flag <- ifelse(locus.block$locus <= length(top.cross.group), '*', '-');		
 				locus.block$flag <- ifelse(locus.block$cross == 'in', paste(locus.block$flag, '*', sep=''), locus.block$flag);		
@@ -459,6 +471,7 @@ combine.locus <- function(gene.name, selected.locus, selected.cross, input, snp.
 	reported <- selected.cross;
 	report <- selected.locus;
 	data.all <- input;
+	weight.all <- group[which(group$weight.size == 1), 'weight']
 	
 	report.1 <- report[which(report$level == 'first' & report$rsq.diff >= rsq.cutoff), ]
 	report.2 <- report[which(report$level == 'second' & report$rsq.diff >= rsq.cutoff), ]
@@ -533,12 +546,13 @@ combine.locus <- function(gene.name, selected.locus, selected.cross, input, snp.
 					for(b in 1:length(list.blocks)) {
 						one.block <- list.blocks[[b]];
 						if(locus %in% one.block) {
-							ranked <- rank.within.block(data.all, locus, one.block, cor.cutoff=0.5);
+							ranked <- rank.within.block(data.all, locus, one.block, cor.cutoff=0.5, weight.all);
 							ranked$level <- paste('comb', best.l, sep='.');
 							ranked$cross <- 'in';  ## everything "in", nothing "out"
 							ranked <- ranked[which(ranked$p.value < 0.01), ]
 							if(nrow(ranked) > 0) {
-								ranked$rank <- 1:nrow(ranked);
+								# ranked$rank <- 1:nrow(ranked);
+								ranked$rank <- rank(-ranked$cor.adj, ties.method='min');
 								ll <- ll + 1;
 								ranked$locus <- ll;
 								locus.block <- rbind(locus.block, ranked);
@@ -637,7 +651,7 @@ estimate.effect.snp <- function(gene.name, input.folder='./', snps=NULL) {
 estimate.effect.comb <- function(gene.name, selected.comb, input, effect.file.path, p.cutoff=1e-4) {
 	if(!is.null(selected.comb) && nrow(selected.comb) > 0) {
 		cat(paste('estimating effect ...', gene.name, '\n', sep='')); flush.console();
-		output <- selected.comb[, which(!colnames(selected.comb) %in% c('idx', 'level', 'cross', 'flag', 'rs', 'p', 'p.w'))];	
+		output <- selected.comb[, which(!colnames(selected.comb) %in% c('level', 'cross', 'flag', 'rs', 'p', 'p.w'))];	
 		geno <- input[, -1];
 		response <- input[, 1];
 	

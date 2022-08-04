@@ -204,7 +204,7 @@ library(parallel);
 # max_level = 8;
 # skip = 1;  ## 0-not skip; 1-skip
 # maxIter = 100;
-run.tree.lasso <- function(name, flag, flag_string, path='', output_file_name='tree-lasso.funcr', weight_flag=0, max_level=8, skip=0, maxIter=100, time.limit=0) {
+run.tree.lasso <- function(name, flag, flag_string, path='', output_file_name='tree-lasso.funcr', weighted='', weight_flag=0, max_level=8, skip=0, maxIter=100, time.limit=0) {
 	set.seed(0);
 	if(time.limit > 0) {
 		setTimeLimit(cpu=time.limit);
@@ -284,25 +284,16 @@ run.tree.lasso <- function(name, flag, flag_string, path='', output_file_name='t
 			group = group_all[which(group_all[, 6] <= max_level), ];
 			node_size = group[, 3];
 			maf = group[, 4];
-			maf = (maf*(1-maf))/0.25;
+#			maf = (maf*(1-maf))/0.25;
 			func = group[, 5];
 			func = 1 - func;
 			group_active = list();
 			g = 1;
 			group_active[[g]] = t(cbind(group[, 1:2], getSizeWeight(node_size, type, max_size))); g = g + 1;  
 			group_active[[g]] = t(cbind(group[, 1:2], getSizeWeight(node_size, type, max_size) + maf)); g = g + 1;  
+			group_active[[g]] = t(cbind(group[, 1:2], getSizeWeight(node_size, type, max_size) + func*5)); g = g + 1;  
 			group_active[[g]] = t(cbind(group[, 1:2], getSizeWeight(node_size, type, max_size) + maf + func*5)); g = g + 1;  
 					
-			if (weight_flag == 0) {
-				group_active = group_active[1:3];
-			} else if (weight_flag == 1) {  ## not using
-				group_active = group_active[1:7];
-			} else if (weight_flag == 1.5) {  ## not using
-				group_active = group_active[c(1:3, 8:11)];
-			} else if (weight_flag == 10) {  ## not using
-				group_active = group_active[1:2];
-			}
-
 			opts=list();
 			opts[['init']]=2;        # starting from a zero point
 			opts[['tFlag']]=5;       # run .maxIter iterations
@@ -312,8 +303,18 @@ run.tree.lasso <- function(name, flag, flag_string, path='', output_file_name='t
 				
 			beta_all = group[, 1:6];
 			iteration = 3;
-#			for (a in 1:length(group_active)) {
-			for (a in 1) {
+			ws = 1;
+			if(weighted == 'maf') {
+				cat('using maf weights...\n');
+				ws = 1:2
+			} else if(weighted == 'func') {
+				cat('using functional weights...\n');
+				ws = c(1, 3);
+			} else if (weighted == 'both') {
+				cat('using maf & functional weights...\n');
+				ws = c(1, 4);
+			}
+			for (a in ws) {
 				gr = group_active[[a]]; 
 				gr_tree = gr;
 				opts[['ind']] = gr_tree;

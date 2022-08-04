@@ -191,7 +191,7 @@ pre.processing.1 <- function(input.info, input.folder='', gz=TRUE, size='all', s
 
 	feature <- c();
 	if(nchar(feature.file) > 2) {
-		feature <- read.table(feature.file, sep='\t', header=F, stringsAsFactors=F);	
+		feature <- read.table(feature.file, sep='\t', header=T, stringsAsFactors=F);	
 		if(ncol(feature) == 1) {
 			colnames(feature) <- c('rs');
 			feature$func <- 0;
@@ -331,6 +331,9 @@ create.processing.list.simulation.2019 <- function(input.folder.path, pattern='.
 		data.file <- one.input.file.path;
 		
 		feature.file <- '';
+		if(weighted == 'func') {
+			feature.file = gsub(pattern, '.anno.txt', data.file);
+		}
 		output.folder <- output.folder.path;
 		if(!dir.exists(output.folder)) {
 			dir.create(output.folder, recursive=T);
@@ -357,10 +360,67 @@ create.processing.list.simulation.2019 <- function(input.folder.path, pattern='.
 	return(result);
 }
 
-create.batch.processing.list <- function(input.folder.path, pattern, output.folder.path) {
-	input.info.list <- create.processing.list.simulation.2019(input.folder.path, pattern, output.folder.path, weighted='')
+create.batch.processing.list <- function(input.folder.path, pattern, output.folder.path, weighted='') {
+	input.info.list <- create.processing.list.simulation.2019(input.folder.path, pattern, output.folder.path, weighted=weighted)
 	return(input.info.list);
 }
 
+adj.response <- function(response.file, covar.file) {
+	cat('processing', response.file, '...\n'); flush.console();
+	geno.file <- gsub('exp', 'geno', response.file);
+	if(file.exists(geno.file)) {
+		covar <- read.table(covar.file, sep=',', header=F, stringsAsFactors=F);
+		colnames(covar) <- paste(rep('C', ncol(covar)), 1:ncol(covar), sep='')
+		output.file <- gsub('gene.exp.orig.maf05', 'gene.exp.orig.maf05.adj', response.file);
 
+		response <- read.table(gzfile(response.file), sep=',', header=F, stringsAsFactors=F);	
+		geno <- read.table(gzfile(geno.file), sep=',', header=F, stringsAsFactors=F);	
+		result <- c();
+		for(idx in 1:ncol(geno)) {
+			input <- cbind(response, covar, geno[, idx]);
+			colnames(input)[1] <- 'resp';
+			model <- lm(resp ~ ., data=input);
+			coeff <- summary(model)$coeff;
+			p <- coeff[nrow(coeff), 4];
+			result <- c(result, p);
+		}
+		result <- data.frame(idx=1:length(result), p=result);
+		result <- result[order(result$p), ];
+		
+		idx.best <- result[1, 'idx'];
+		input <- cbind(response, covar, geno[, idx.best]);
+		colnames(input)[1] <- 'resp';
+		model <- lm(resp ~ ., data=input);
+		coeff <- summary(model)$coeff;
+		b <- coeff[1:(nrow(coeff)-1), 1];
+		resp.adj <- c();
+		for(i in 1:nrow(covar)) {
+			x <- c(1, unlist(covar[i, ]));
+			one.adj <- response[i, 1] - sum(b * x);
+			resp.adj <- c(resp.adj, one.adj); 
+		}
+		write.table(resp.adj, gzfile(output.file), sep=',', quote=F, row.names=F, col.names=F);
+	}
+}
+## testing
+# setwd('~/my.scratch/projects/GTEx/brain.hippo')
+# source('../my.functions.pre.processing.R')
+# response.files <- paste('gene.exp.orig.maf05/', list.files('gene.exp.orig.maf05/'), sep='/');
+# covar.file <- 'Brain_Hippocampus.v7.covariates.csv';
+# finished <- mclapply(response.files, mc.cores=28, adj.response, covar.file=covar.file)
+
+## input.folder='simulated/1_causal/0_0.1/'; pattern='.simulated.txt'; anno.file.name='../simulation/real_genotype/DHS_variants_in_simulated_cis_regions';
+annotate.features = function(input.folder, pattern='.simulated.txt', anno.file.name) {
+	anno = read.table(anno.file.name, header=F, sep='\t', stringsAsFactors=F)
+	func.var = anno[, 1]
+	input.files = list.files(input.folder, pattern=pattern);
+	input.files = paste(input.folder, input.files, sep='/');
+	output.files = gsub(pattern, '.anno.txt', input.files)
+	for(f in 1:length(input.files)) {
+		data = read.table(input.files[f], sep='\t', header=T, nrows=3)
+		features = data.frame(rs=colnames(data[, -c(1,2)]), func=0);
+		features[which(features$rs %in% func.var), 'func'] = 1;
+		write.table(features, output.files[f], sep='\t', row.names=F, quote=F);
+	}
+}
 

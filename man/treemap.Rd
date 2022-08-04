@@ -21,7 +21,15 @@ treemap(
 
 \item{output.folder:}{The directory where output files and intermediate files are to be saved. If the specified directory does not exist, it will be automatically created. Default is the current working directory.}
 
-\item{weighted:}{A string that indicates if functional scores are used for weighting. Default value is an empty string "" indicating no weighting. If set to "func", functional scores from an annotation file will be used. The annotation file shall be named as "xx.anno.txt" where "xx" matches the unique substring of the corresponding exp_geno input file name, e.g., "SMNT.anno.txt". The annotation file has two tab-delimited columns - the 1st column has variant IDs matching the headers of the genotype columns in the input file; the 2nd column has functional scores. Variants with high functional scores have increased chance of being selected as causal. Each annotation file shall have a header line, although there is no restriction on how you want to name each column. A example annotation file "SMNT.anno.txt" is provided in the "examples/" folder.}
+\item{weighted:}{A string that indicates if functional scores are used for weighting. 
+
+Default value is an empty string "" indicating no weighting. 
+
+If set to "func", functional scores from an annotation file will be used. The annotation file shall be named as "xx.anno.txt" where "xx" matches the unique substring of the corresponding exp_geno input file name, e.g., "SMNT.anno.txt". The annotation file has two tab-delimited columns - the 1st column has variant IDs matching the headers of the genotype columns in the input file; the 2nd column has functional scores. A functional score takes a value between 0 (functionally unimportant) and 1 (functionally important). Functionally important variants are prioritized. Each annotation file shall have a header line, although there is no restriction on how you want to name each column. A example annotation file "SMNT.anno.txt" is provided in the "examples/" folder.
+
+If set to "maf", minor allele frequency of each variant will be calcualted based on input data and rare variants are prioritized.
+
+If set to "both", maf and functional scores will be used together.}
 
 \item{steps:}{A vector of integers corresponding to the functions that will be executed. Default is 1:9. The final output is written to a file named xx.treemap.out where xx matches the name of the input file.
 

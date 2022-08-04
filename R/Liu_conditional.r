@@ -1,6 +1,6 @@
 require(MASS)
 
-parse.lasso <- function(input, snp.names, group, lasso.file.path, top.file.path, weighted='maf') {
+parse.lasso <- function(input, snp.names, group, lasso.file.path, top.file.path, weighted='') {
 	cat(paste('analyzing lasso output', lasso.file.path, '...\n', sep=' ')); flush.console();
 	temp <- colnames(input)[2];
 	if(substr(temp, 0, 1) == 'X') {
@@ -13,10 +13,10 @@ parse.lasso <- function(input, snp.names, group, lasso.file.path, top.file.path,
 	lasso.all <- read.table(lasso.file.path, sep=',', header=F, stringsAsFactors=F);
 	col.end <- ncol(lasso.all);	
 	if(weighted == 'both') {
-		col.end <- 6 + 6*3;
+		col.end <- 6 + 6*2;
 	} else if (weighted == 'maf') {
 		col.end <- 6 + 6*2;
-	} else if (weighted == 'function') {
+	} else if (weighted == 'func') {
 		col.end <- 6 + 6*2;
 	} else {
 		col.end <- 6 + 6;
@@ -166,7 +166,7 @@ select.cross.groups <- function(selected.within, input, snp.names, group, cross.
 	return(selected.cross)
 }
 
-uni.unorder <- function(resp, ftr, ftr.name='') {
+uni.unorder <- function(resp, ftr, ftr.name='', weight) {
 	p.values <- c();
 	if(is.vector(ftr)) {
 		ftr <- as.data.frame(ftr);
@@ -183,12 +183,17 @@ uni.unorder <- function(resp, ftr, ftr.name='') {
 		p.values <- c(p.values, p);
 	}
 	result <- data.frame(index=1:ncol(ftr), rs=colnames(ftr), p.value=p.values, stringsAsFactors=F);
+	if(!is.null(weight)) {
+		result$p.adj = result$p.value * weight
+	} else {
+		result$p.adj = result$p.value
+	}
 	return(result);
 }
 
-uni.order <- function(resp, ftr, ftr.name='') {
-	result <- uni.unorder(resp, ftr, ftr.name);
-	result <- result[order(result$p.value), ]
+uni.order <- function(resp, ftr, ftr.name='', weight) {
+	result <- uni.unorder(resp, ftr, ftr.name, weight);
+	result <- result[order(result$p.adj), ]
 	return(result);
 }
 

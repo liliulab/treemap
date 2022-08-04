@@ -216,16 +216,33 @@ conditional.1 <- function(input.info, input.folder='') {
 #' @param input.folder: The directory where input files are available. Default is the current working directory. Each input file is a tab-delimited text file - sample ID in the 1st column, gene expression value in the 2nd column, and genotype data in the remaining columns. Genotypes values are coded as 0/1/2 for homozygous reference, heterozygous and homozygous alternative, respectively. Each row has data from one individual. Each input file shall have a header line. While the column headers have no restrictions, we recommend using variant IDs as the headers of the genotype columns. An example input file "SMNT.exp_geno.txt" is provided in the "examples/" folder. 
 #' @param pattern: A string that matches part of the input file names. This string shall be present in only input files, and absent from other file names in the same folder. Default is 'exp_geno.txt'.
 #' @param output.folder: The directory where output files and intermediate files are to be saved. If the specified directory does not exist, it will be automatically created. Default is the current working directory.
-#' @param weighted: A string that indicates if functional scores are used for weighting. Default value is an empty string "" indicating no weighting. If set to "func", functional scores from an annotation file will be used. The annotation file shall be named as "xx.anno.txt" where "xx" matches the unique substring of the corresponding exp_geno input file name, e.g., "SMNT.anno.txt". The annotation file has two tab-delimited columns - the 1st column has variant IDs matching the headers of the genotype columns in the input file; the 2nd column has functional scores. Each annotation file shall have a header line, although there is no restriction on how you want to name each column. A example annotation file "SMNT.anno.txt" is provided in the "examples/" folder.
+#' @param weighted: A string that indicates if functional scores are used for weighting. 
+
+#'  Default value is an empty string "" indicating no weighting. 
+
+#'  If set to "func", functional scores from an annotation file will be used. The annotation file shall be named as "xx.anno.txt" where "xx" matches the unique substring of the corresponding exp_geno input file name, e.g., "SMNT.anno.txt". The annotation file has two tab-delimited columns - the 1st column has variant IDs matching the headers of the genotype columns in the input file; the 2nd column has functional scores. A functional score takes a value between 0 (functionally unimportant) and 1 (functionally important). Functionally important variants are prioritized. Each annotation file shall have a header line, although there is no restriction on how you want to name each column. A example annotation file "SMNT.anno.txt" is provided in the "examples/" folder.
+
+#'  If set to "maf", minor allele frequency of each variant will be calcualted based on input data and rare variants are prioritized.
+
+#'  If set to "both", maf and functional scores will be used together.
 #' @param steps: A vector of integers corresponding to the functions that will be executed. Default is 1:9. The final output is written to a file named xx.treemap.out where xx matches the name of the input file.
+
 #'	1: pre-processing. This step removes variants with missing genotypes in >50% samples, and remove samples with missing genotypes of >50% variants. It performs z-transformation to scale each genotype column. It groups variants into a hierarchical structure based on linkage disequilibrium. This step produces several intermediate files including xx.response.csv.gz, xx.geno.csv.gz, xx.geno.norm.csv.gz and xx.group.csv.gz that correspond to gene expression values, original genotypes, normalized genotype values, LD groups, respectively.
+
 #'	2: outer-layer. This step performs tree-guided group lasso. It produces an intermediate file xx.tree-lasso.csv
+
 #'	3: outer-layer. This step parses lasso output. It produces an intermediate file xx.top.txt.
+
 #'	4: middle-layer. This step selects variants within an LD block. It produces an intermediate file xx.within.RData.
+
 #'	5: inner-layer. This step selects variants across multiple LD blocks and individual variants. It produces an intermediate file xx.cross.RData.
+
 #'	6: inner-layer. This step produces the global optimal combination of multiple loci. It produces an intermediate file xx.locus.txt.
+
 #'	7: inner-layer. This step ranks variants within each selected locus. It produces an intermediate file xx.comb.txt.
+
 #'	8: estimate effect: This step esimates the effect size of each top-ranked variant at a locus via multivariate linear regression. It produces the final output file xx.treemap.out.
+
 #'	9: log run-time: This step writes run time of each of the previous step in a log file xx.log.txt.
 #' @param mc.cores: The number of parallel processes that will be forked for batch processing. This is useful for multi-core desktops or server clusters. Default is 1. 
 #' @return NULL
