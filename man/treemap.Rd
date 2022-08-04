@@ -24,14 +24,23 @@ treemap(
 \item{weighted:}{A string that indicates if functional scores are used for weighting. Default value is an empty string "" indicating no weighting. If set to "func", functional scores from an annotation file will be used. The annotation file shall be named as "xx.anno.txt" where "xx" matches the unique substring of the corresponding exp_geno input file name, e.g., "SMNT.anno.txt". The annotation file has two tab-delimited columns - the 1st column has variant IDs matching the headers of the genotype columns in the input file; the 2nd column has functional scores. Variants with high functional scores have increased chance of being selected as causal. Each annotation file shall have a header line, although there is no restriction on how you want to name each column. A example annotation file "SMNT.anno.txt" is provided in the "examples/" folder.}
 
 \item{steps:}{A vector of integers corresponding to the functions that will be executed. Default is 1:9. The final output is written to a file named xx.treemap.out where xx matches the name of the input file.
+
 1: pre-processing. This step removes variants with missing genotypes in >50% samples, and remove samples with missing genotypes of >50% variants. It performs z-transformation to scale each genotype column. It groups variants into a hierarchical structure based on linkage disequilibrium. This step produces several intermediate files including xx.response.csv.gz, xx.geno.csv.gz, xx.geno.norm.csv.gz and xx.group.csv.gz that correspond to gene expression values, original genotypes, normalized genotype values, LD groups, respectively.
+
 2: outer-layer. This step performs tree-guided group lasso. It produces an intermediate file xx.tree-lasso.csv
+
 3: outer-layer. This step parses lasso output. It produces an intermediate file xx.top.txt.
+
 4: middle-layer. This step selects variants within an LD block. It produces an intermediate file xx.within.RData.
+
 5: inner-layer. This step selects variants across multiple LD blocks and individual variants. It produces an intermediate file xx.cross.RData.
+
 6: inner-layer. This step produces the global optimal combination of multiple loci. It produces an intermediate file xx.locus.txt.
+
 7: inner-layer. This step ranks variants within each selected locus. It produces an intermediate file xx.comb.txt.
+
 8: estimate effect: This step esimates the effect size of each top-ranked variant at a locus via multivariate linear regression. It produces the final output file xx.treemap.out.
+
 9: log run-time: This step writes run time of each of the previous step in a log file xx.log.txt.}
 
 \item{mc.cores:}{The number of parallel processes that will be forked for batch processing. This is useful for multi-core desktops or server clusters. Default is 1.}
