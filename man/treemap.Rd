@@ -56,6 +56,8 @@ If set to "both", maf and functional scores will be used together.}
 \value{
 NULL
 The final fine mapping result is written to the file xx.treemap.out. The "locus" column indicates unique causal locus. The "rank" column indicates ranking of variants within each locus. Variants with rank of 1 are lead eVars at a locus. Lead eVars are included in the global optimal solution, and their estimated effect sizes are in the "effect.est" column. Variants with rank >1 are suboptimal solutions that are linked to the lead eVar at each locus, with r2 values shown in the "cor" column.
+
+If no variant passes the p-value<0.0001 cutoff in step 8 (estimate effect), the xx.treemap.out file will not be produced. Users can use output files from previous steps, e.g., xx.comb.txt, to examine intermediate results.
 }
 \description{
 Perform TreeMap analysis for fine mapping.
