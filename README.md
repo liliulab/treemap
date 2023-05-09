@@ -9,9 +9,9 @@ TreeMap supports parallel processing in cluster environment.
 
 ## Dependencies 
 ````
-Rtools is required on Windows systems. It can be installed by following instructions on https://cran.r-project.org/bin/windows/Rtools/
+Rtools is required for Windows systems. It can be installed by following instructions on https://cran.r-project.org/bin/windows/Rtools/
 
-TreeGuidedLasso is required, which is available on github. Installation via  
+TreeGuidedLasso is required for all systems. It is available on github and shall be installed via  
  devtools::install_github('liliulab/treemap')
 ````
 ## Install 
