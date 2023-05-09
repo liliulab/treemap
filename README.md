@@ -7,13 +7,13 @@ Users can provide an optinal annotation file containing functional scores of var
 
 TreeMap supports parallel processing in cluster environment.
 
-## Dependencies. 
+## Dependencies 
 ````
- It requires Rtools if you are on a Windows system. Rtools can be installed by following instructions on https://cran.r-project.org/bin/windows/Rtools/
- It also requires TreeGuidedLasso, which is available on github. Installation via  
+Rtools is required on Windows systems. It can be installed by following instructions on https://cran.r-project.org/bin/windows/Rtools/
+TreeGuidedLasso is required, which is available on github. Installation via  
  devtools::install_github('liliulab/treemap')
 ````
-## Install. 
+## Install 
 ````
  devtools::install_github('liliulab/treemap')
 ````
