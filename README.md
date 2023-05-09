@@ -11,7 +11,8 @@ TreeMap supports parallel processing in cluster environment.
 ````
 Rtools is required for Windows systems. It can be installed by following instructions on https://cran.r-project.org/bin/windows/Rtools/
 
-Other packages that need to be installed include stringr, tictoc, parallel, MASS, BayesFactor, igraph, intervals, DMwR, and TreeGuidedLasso. In case auto-installation does not work, you can install these packages manually.
+Other packages that need to be installed include stringr, tictoc, parallel, MASS, BayesFactor, igraph, intervals, DMwR, and TreeGuidedLasso. 
+In case auto-installation does not work, you can install these packages manually.
  install.packages(c('stringr', 'tictoc', 'parallel', 'MASS', 'BayesFactor', 'igraph', 'intervals')
  remotes::install_github("cran/DMwR")
  devtools::install_github('liliulab/treemap')
