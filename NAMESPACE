@@ -4,12 +4,12 @@
 import(TreeGuidedRegression)
 import(stringr)
 import(tictoc)
-import(parallel);
-import(MASS);
-import(BayesFactor);
-import(igraph);
-import(intervals);
-import(DMwR);
+import(parallel)
+import(MASS)
+import(BayesFactor)
+import(igraph)
+import(intervals)
+import(DMwR)
 
 # export functions for users
 export(treemap)
